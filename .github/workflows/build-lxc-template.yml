@@ -14,15 +14,19 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Build LXC template tarball
+        working-directory: scripts
         run: |
-          cd scripts
-          ./build-lxc-template.sh
+          bash build-lxc-template.sh
         env:
           ROOTFS: /tmp/rootfs
           TARBALL_NAME: debian-13-caddy-cloudflare_13.0-1_amd64.tar.gz
+
+      - name: List generated files (debug)
+        run: |
+          ls -l scripts
 
       - name: Upload template artifact
         uses: actions/upload-artifact@v4
         with:
           name: debian-13-caddy-cloudflare_13.0-1_amd64
-          path: debian-13-caddy-cloudflare_13.0-1_amd64.tar.gz
+          path: scripts/debian-13-caddy-cloudflare_13.0-1_amd64.tar.gz
