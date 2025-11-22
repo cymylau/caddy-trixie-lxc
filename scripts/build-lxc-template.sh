@@ -57,7 +57,7 @@ fi
 mkdir -p /etc/caddy /var/log/caddy
 chown -R caddy:caddy /etc/caddy /var/lib/caddy /var/log/caddy
 
-# Download Caddy with Cloudflare DNS module (raw binary, NOT a tarball)
+# Download Caddy with Cloudflare DNS module (raw binary)
 mkdir -p /tmp/caddy-install
 cd /tmp/caddy-install
 
@@ -70,11 +70,10 @@ chmod +x /usr/local/bin/caddy
 
 cd /
 rm -rf /tmp/caddy-install
-"
 
-echo "==> Writing placeholder Caddyfile into rootfs (no runtime config baked in)..."
+echo '==> Writing placeholder Caddyfile (inside chroot)...'
 
-sudo tee "${ROOTFS}/etc/caddy/Caddyfile" >/dev/null <<'EOF'
+cat >/etc/caddy/Caddyfile <<'EOF_CF'
 # Caddyfile placeholder
 #
 # This template intentionally does NOT define any sites.
@@ -100,13 +99,13 @@ sudo tee "${ROOTFS}/etc/caddy/Caddyfile" >/dev/null <<'EOF'
 # After editing:
 #   systemctl daemon-reload
 #   systemctl enable --now caddy
-EOF
+EOF_CF
 
-sudo chown caddy:caddy "${ROOTFS}/etc/caddy/Caddyfile"
+chown caddy:caddy /etc/caddy/Caddyfile
 
-echo "==> Creating systemd service for Caddy in rootfs..."
+echo '==> Creating systemd service for Caddy...'
 
-sudo tee "${ROOTFS}/etc/systemd/system/caddy.service" >/dev/null <<'EOF'
+cat >/etc/systemd/system/caddy.service <<'EOF_SVC'
 [Unit]
 Description=Caddy web server (reverse proxy)
 After=network-online.target
@@ -133,19 +132,17 @@ Environment=CLOUDFLARE_API_TOKEN=REPLACE_WITH_YOUR_TOKEN
 
 [Install]
 WantedBy=multi-user.target
-EOF
+EOF_SVC
 
-echo "==> NOTE: Caddy service is installed but NOT enabled by default."
-echo "          You will enable it at runtime after providing a real Caddyfile."
+echo '==> NOTE: Caddy service is installed but NOT enabled by default.'
+echo '          You will enable it at runtime after providing a real Caddyfile.'
 
-echo "==> Cleaning up apt caches inside rootfs..."
-sudo chroot \"${ROOTFS}\" bash -lc \"
-set -euo pipefail
+echo '==> Cleaning up apt caches inside rootfs...'
 apt-get clean
 rm -rf /var/lib/apt/lists/*
-\"
+"
 
-echo \"==> Creating LXC template tarball: ${TARBALL_NAME}...\"
-sudo tar --numeric-owner -czpf \"${TARBALL_NAME}\" -C \"${ROOTFS}\" .
+echo "==> Creating LXC template tarball: ${TARBALL_NAME}..."
+sudo tar --numeric-owner -czpf "${TARBALL_NAME}" -C "${ROOTFS}" .
 
-echo \"==> Done. Generated template: ${TARBALL_NAME}\"
+echo "==> Done. Generated template: ${TARBALL_NAME}"
