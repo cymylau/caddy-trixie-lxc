@@ -1,19 +1,23 @@
-name: Build Proxmox LXC Template (Debian 13 + Caddy Cloudflare)
+name: Build & Publish Proxmox LXC Template
 
 on:
   push:
-    branches: [ "main" ]
+    tags:
+      - "v*"
   workflow_dispatch: {}
 
+permissions:
+  contents: write   # Needed to publish releases
+
 jobs:
-  build-template:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build LXC template tarball
+      - name: Build LXC template
         working-directory: scripts
         run: |
           bash build-lxc-template.sh
@@ -21,12 +25,9 @@ jobs:
           ROOTFS: /tmp/rootfs
           TARBALL_NAME: debian-13-caddy-cloudflare_13.0-1_amd64.tar.gz
 
-      - name: List generated files (debug)
-        run: |
-          ls -l scripts
-
-      - name: Upload template artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload Release Asset
+        uses: softprops/action-gh-release@v1
         with:
-          name: debian-13-caddy-cloudflare_13.0-1_amd64
-          path: scripts/debian-13-caddy-cloudflare_13.0-1_amd64.tar.gz
+          files: scripts/debian-13-caddy-cloudflare_13.0-1_amd64.tar.gz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
