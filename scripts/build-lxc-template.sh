@@ -57,15 +57,14 @@ fi
 mkdir -p /etc/caddy /var/log/caddy
 chown -R caddy:caddy /etc/caddy /var/lib/caddy /var/log/caddy
 
-# Download Caddy with Cloudflare DNS module
+# Download Caddy with Cloudflare DNS module (raw binary, NOT a tarball)
 mkdir -p /tmp/caddy-install
 cd /tmp/caddy-install
 
 curl -fsSL \
   'https://caddyserver.com/api/download?os=linux&arch=amd64&p=github.com%2Fcaddy-dns%2Fcloudflare' \
-  -o caddy.tar.gz
+  -o caddy
 
-tar -xzf caddy.tar.gz
 mv caddy /usr/local/bin/caddy
 chmod +x /usr/local/bin/caddy
 
@@ -140,13 +139,13 @@ echo "==> NOTE: Caddy service is installed but NOT enabled by default."
 echo "          You will enable it at runtime after providing a real Caddyfile."
 
 echo "==> Cleaning up apt caches inside rootfs..."
-sudo chroot "${ROOTFS}" bash -lc "
+sudo chroot \"${ROOTFS}\" bash -lc \"
 set -euo pipefail
 apt-get clean
 rm -rf /var/lib/apt/lists/*
-"
+\"
 
-echo "==> Creating LXC template tarball: ${TARBALL_NAME}..."
-sudo tar --numeric-owner -czpf "${TARBALL_NAME}" -C "${ROOTFS}" .
+echo \"==> Creating LXC template tarball: ${TARBALL_NAME}...\"
+sudo tar --numeric-owner -czpf \"${TARBALL_NAME}\" -C \"${ROOTFS}\" .
 
-echo "==> Done. Generated template: ${TARBALL_NAME}"
+echo \"==> Done. Generated template: ${TARBALL_NAME}\"
